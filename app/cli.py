@@ -3,6 +3,7 @@ Command-line interface for network scanning tool.
 """
 
 import asyncio
+import functools
 import logging
 import os
 import sys
@@ -32,6 +33,13 @@ def cli():
     """Network discovery tool for scanning LAN devices."""
     pass
 
+
+def async_command(f):
+    """Decorator to properly handle async Click commands."""
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+    return wrapper
 
 @cli.command('scan')
 @click.option(
@@ -73,6 +81,7 @@ def cli():
     is_flag=True,
     help='Enable verbose output'
 )
+@async_command
 async def scan(
     subnet: str,
     timeout: float,
@@ -143,8 +152,8 @@ async def scan(
 
 def main():
     """Entry point for the command-line application."""
-    # This function will be used as an entry point in setup.py
-    asyncio.run(cli())
+    # Using a wrapper function to handle async commands
+    cli()
 
 
 if __name__ == '__main__':

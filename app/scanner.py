@@ -4,14 +4,25 @@ Asynchronous network scanner module for discovering devices on a LAN.
 
 import asyncio
 import logging
+import shutil
 import socket
+import subprocess
 from dataclasses import dataclass
 from ipaddress import IPv4Address, IPv4Network
 from typing import Dict, List, Optional, Set, Tuple
 
-import nmap
 from netaddr import EUI, NotRegisteredError
 from scapy.all import ARP, Ether, srp
+
+# Check if nmap is available
+NMAP_AVAILABLE = shutil.which("nmap") is not None
+
+# Import nmap conditionally
+if NMAP_AVAILABLE:
+    try:
+        import nmap
+    except ImportError:
+        NMAP_AVAILABLE = False
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -51,7 +62,22 @@ class AsyncNetworkScanner:
         self.timeout = timeout
         self.semaphore = asyncio.Semaphore(concurrent_scans)
         self.devices: List[NetworkDevice] = []
-        self.nm = nmap.PortScanner()
+        self.nm = None
+        
+        # Initialize nmap if available
+        if NMAP_AVAILABLE:
+            try:
+                self.nm = nmap.PortScanner()
+                logger.info("nmap is available and will be used for scanning")
+            except Exception as e:
+                logger.warning(f"Failed to initialize nmap: {e}")
+        else:
+            logger.warning("nmap is not available. Using ARP-only scanning mode.")
+            logger.info("Install nmap for more accurate device information.")
+            logger.info("  - On Debian/Ubuntu: sudo apt install nmap")
+            logger.info("  - On CentOS/RHEL: sudo yum install nmap")
+            logger.info("  - On macOS: brew install nmap")
+            logger.info("  - On Windows: download from https://nmap.org/download.html")
     
     async def scan_network(self) -> List[NetworkDevice]:
         """
@@ -175,19 +201,23 @@ class AsyncNetworkScanner:
         
         def _do_scan():
             try:
-                # Use nmap to get MAC address
-                self.nm.scan(ip_str, arguments='-sn')
-                for host in self.nm.all_hosts():
-                    if 'mac' in self.nm[host]['addresses']:
-                        mac = self.nm[host]['addresses']['mac']
-                        vendor = self.nm[host].get('vendor', {}).get(mac)
-                        return mac, vendor
+                # Try nmap method if available
+                if NMAP_AVAILABLE and self.nm:
+                    try:
+                        self.nm.scan(ip_str, arguments='-sn')
+                        for host in self.nm.all_hosts():
+                            if 'mac' in self.nm[host]['addresses']:
+                                mac = self.nm[host]['addresses']['mac']
+                                vendor = self.nm[host].get('vendor', {}).get(mac)
+                                return mac, vendor
+                    except Exception as e:
+                        logger.debug(f"nmap scan failed for {ip_str}: {e}")
                 
-                # Fallback to ARP scan if nmap didn't find the MAC
+                # Use ARP scan method (works without nmap)
                 arp = ARP(pdst=ip_str)
                 ether = Ether(dst="ff:ff:ff:ff:ff:ff")
                 result = srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(pdst=ip_str), 
-                             timeout=self.timeout, verbose=0)[0]
+                            timeout=self.timeout, verbose=0)[0]
                 
                 if result:
                     mac = result[0][1].hwsrc
@@ -195,6 +225,9 @@ class AsyncNetworkScanner:
                         eui = EUI(mac)
                         vendor = eui.oui.registration().org
                     except NotRegisteredError:
+                        vendor = None
+                    except Exception as e:
+                        logger.debug(f"Failed to get vendor for {mac}: {e}")
                         vendor = None
                     return mac, vendor
                     

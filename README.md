@@ -76,6 +76,18 @@ The generated CSV file includes the following columns:
   - python-nmap
   - netaddr
 
+### System Requirements
+
+For optimal performance, the following system packages are recommended:
+
+- **nmap**: Used for more accurate MAC address and vendor detection
+  - On Debian/Ubuntu: `sudo apt install nmap`
+  - On CentOS/RHEL: `sudo yum install nmap`
+  - On macOS: `brew install nmap`
+  - On Windows: download from [nmap.org](https://nmap.org/download.html)
+
+**Note**: The tool will still work without nmap, but with reduced functionality (using ARP-only scanning).
+
 ## Development
 
 ```bash
