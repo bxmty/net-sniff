@@ -172,3 +172,12 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# VS Code settings
+.vscode/
+
+# Claude markdown
+CLAUDE*
+
+# output files
+*.csv

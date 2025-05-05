@@ -1,0 +1,33 @@
+[project]
+name = "net-sniff"
+version = "0.1.0"
+description = "A network discovery tool for scanning LAN devices"
+authors = [
+    {name = "Matt Mattice",email = "matticem@boximity.ca"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "asyncio (>=3.4.3,<4.0.0)",
+    "aiofiles (>=24.1.0,<25.0.0)",
+    "click (>=8.1.8,<9.0.0)",
+    "scapy (>=2.6.1,<3.0.0)",
+    "python-nmap (>=0.7.1,<0.8.0)",
+    "netaddr (>=1.3.0,<2.0.0)"
+]
+
+[project.scripts]
+net-sniff = "app.cli:main"
+
+[tool.poetry]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+black = "^25.1.0"
+isort = "^6.0.1"
+flake8 = "^7.2.0"
+mypy = "^1.15.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
