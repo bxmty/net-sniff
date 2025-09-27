@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  net-sniff:
+    build: .
+    container_name: net-sniff-monitor
+    restart: ${RESTART_POLICY:-unless-stopped}
+    network_mode: host
+    environment:
+      # Configure the subnet to scan (update to match your network)
+      - SUBNET=${SUBNET:-192.168.1.0/24}
+      # Scan interval in seconds (default: 300 = 5 minutes)
+      - SCAN_INTERVAL=${SCAN_INTERVAL:-300}
+      # Scan timeout in seconds (default: 2.0)
+      - SCAN_TIMEOUT=${SCAN_TIMEOUT:-2.0}
+      # Log level
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # Mount output directory to persist CSV files
+      - ./output:/app/output
+    # For manual runs with custom commands
+    # command: python -m app.cli scan -s 192.168.1.0/24 -v
+    
+    # Security context - network scanning needs some privileges
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    
+    # Health check to ensure the service is running
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep -v grep | grep python || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Resource limits to prevent excessive resource usage
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
