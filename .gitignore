@@ -136,6 +136,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Docker environment file (user-created)
+.env
+
 # Spyder project settings
 .spyderproject
 .spyproject
