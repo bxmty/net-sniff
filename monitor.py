@@ -147,12 +147,21 @@ async def main():
     subnet = os.getenv('SUBNET', '192.168.1.0/24')
     scan_interval = int(os.getenv('SCAN_INTERVAL', '300'))  # 5 minutes default
     timeout = float(os.getenv('SCAN_TIMEOUT', '2.0'))
+    log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+    
+    # Set log level
+    try:
+        logging.getLogger().setLevel(getattr(logging, log_level))
+    except AttributeError:
+        logger.warning(f"Invalid log level '{log_level}', using INFO")
+        logging.getLogger().setLevel(logging.INFO)
     
     logger.info(f"Net-Sniff Network Monitor starting...")
     logger.info(f"Configuration:")
     logger.info(f"  - Subnet: {subnet}")
     logger.info(f"  - Scan interval: {scan_interval} seconds")
     logger.info(f"  - Scan timeout: {timeout} seconds")
+    logger.info(f"  - Log level: {logging.getLogger().level}")
     
     # Validate subnet format
     try:

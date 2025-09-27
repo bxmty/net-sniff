@@ -45,7 +45,17 @@ print('✓ Monitor script imports successfully')
 
 # Test 6: Check output directory
 echo -e "\n6. Testing output directory..."
-[ -d "/app/output" ] && echo "✓ Output directory exists" || echo "✗ Output directory missing"
-[ -w "/app/output" ] && echo "✓ Output directory is writable" || echo "✗ Output directory not writable"
+if [ -d "/app/output" ]; then
+    echo "✓ Output directory exists"
+    [ -w "/app/output" ] && echo "✓ Output directory is writable" || echo "✗ Output directory not writable"
+else
+    # Check local output directory for non-container testing
+    if [ -d "output" ]; then
+        echo "✓ Local output directory exists"
+        [ -w "output" ] && echo "✓ Local output directory is writable" || echo "✗ Local output directory not writable"
+    else
+        echo "✗ Output directory missing"
+    fi
+fi
 
 echo -e "\n✓ Container tests completed!"
